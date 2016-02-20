@@ -122,53 +122,53 @@ Mais detalhes (em inglês):
 - [[https://http2.golang.org/][demo do HTTP/2]] (feito em Go)
 - [[https://www.youtube.com/watch?v=gukAZO1fqZQ][Vídeo do Brad Fitzpatrick dando uma visão geral do suporte a HTTP/2 no Go 1.6]] no evento London Go Gathering de 2015.
 
-* Sharing pointers between Go and C
+* Passando ponteiros entre Go e C
 
-The major change to cgo in Go 1.6 is the rules for sharing Go pointers with C code, to ensure that such C code can coexist with Go's garbage collector, have been clarified.
+A maior mudança para o cgo no Go 1.6 é que as regras para compartilhar ponteiros de Go com código em C, para garantir que código em C pode coexistir com o garbage collector do Go, foram clarificadas.
 
-Go and C may share memory allocated by Go when:
+Go e C podem compartilhar memória alocada no Go quando:
 
-- a pointer to that memory is passed to C as part of a cgo call,
-- and provided that the memory itself contains no pointers to Go-allocated memory,
-- and provided that C does not retain the pointer after the call returns.
+- um ponteiro para essa memória é passado para o C durante uma chamada cgo,
+- desde que essa memória não tenha ponteiros para mais memória alocada em Go,
+- desde que o código em C não retenha o ponteiro depois que retornar.
 
-These rules are checked by the runtime during program execution: if the runtime detects a violation, it prints a diagnosis and crashes the program.
+Essas regras são verificadas em tempo de execução: se uma violação é detectadada, um diagnóstico sai na tela e o programa crasha.
 
-The checks can be disabled by setting the environment variable `GODEBUG=cgocheck=0`, but note that disabling the checks will typically only lead to more mysterious failure modes.
+Isso pode ser desativado usando a variável de ambiente `GODEBUG=cgocheck=0`, mas cuidado pois desativar isso costuma levar a falhas misterioras.
 
-Fixing the code in question should be strongly preferred over turning off the checks.
+Recomenda-se fortemente corrigir esse tipo de código em vez de desativar as verificações.
 
-* Sharing pointers between Go and C (cont.)
+* Passando ponteiros entre Go e C (cont.)
 
 .play go1.6/cgo.go
 
-* Compiler Toolchain
+* Compilador
 
-Externally the compiler toolchain is mostly unchanged compared to Go 1.5.
+Por fora, a cadeia de compilação permanece a mesma do Go 1.5.
 
-Internally, the most significant change is that the parser is now hand-written instead of generated from yacc.
+Internamente, a principal mudança é que o parser agora é feito à mão em vez de gerado pelo yacc.
 
-The new SSA compiler backend is slated to land, for amd64 only at this stage, in Go 1.7.
+O novo compilador SSA deve sair no Go 1.7 mas apenas para amd64.
 
-* Changes to the -X flag
+* Mudanças para a flag -X
 
-In Go 1.5 the linker's -X flag changed.
+No Go 1.5 a flag -X do linker mudou.
 
-In Go 1.4 and earlier, it took two arguments, as in
+No Go 1.4 e antes, ela levava dois argumentos:
 
-    -X importpath.name value
+    -X pathdeimportacao.nome valor
 
-Go 1.5 added an alternative syntax using a single argument that is itself a name=value pair:
+O Go 1.5 adicionou uma sintaxe alternativa usando só um argumento que é um par chave-valor:
 
-    -X importpath.name=value
+    -X pathdeimportacao.nome=valor
 
-In Go 1.5 the old syntax was still accepted, after printing a warning suggesting use of the new syntax instead. Go 1.6 continues to accept the old syntax and print the warning. Go 1.7 will remove support for the old syntax.
+No Go 1.5 a sintaxe antiga ainda era aceita, com um warning sugerindo o uso da nova sintaxe. O Go 1.6 mantém esse comportamento. No Go 1.7 o suporte à sintaxe antiga será removido.
 
-* maps panic if you misuse them
+* maps dão panic se forem usados errado
 
-The runtime has added lightweight, best-effort detection of concurrent misuse of maps.
+O runtime adicionou uma detecção leve para uso concorrente incorreto de maps.
 
-If the runtime detects this condition, it prints a diagnosis and crashes the program.
+Se o runtime detecta essa condição, ele imprime um diagnóstico e crasha o programa.
 
     fatal error: concurrent map writes
 
@@ -176,49 +176,49 @@ If the runtime detects this condition, it prints a diagnosis and crashes the pro
     runtime.throw(0x192d630, 0x15)
         /usr/lib/go/src/runtime/panic.go:530 +0x90 fp=0xc8202eb838 sp=0xc8202eb820
 
-The best way to find out more about the problem is to run the program under the race detector.
+A melhor maneira de entender melhor o problema é rodar o programa usando o race detector.
 
-* maps panic if you misuse them (example)
+* maps dão panic se forem usados errado (example)
 
 .play go1.6/map.go /START OMIT/,/END OMIT/
 
-* Panic messages are shorter by default
+* Mensagens de panic são mais curtas por padrão
 
-For program-ending panics, the runtime now by default prints _only_the_stack_of_the_running_goroutine_, not all existing goroutines.
+Para panics que terminanm o programa, o runtime agora _só_exibe_a_stack_da_goroutine_em_execução_, não todas as goroutines.
 
-Usually only the current goroutine is relevant to a panic, so omitting the others significantly reduces irrelevant output in a crash message.
+Em geral só a goroutine que está rodando importa para o panic, então omitir as outras reduz muito a quantidade de output irrelevante numa mensagem de crash.
 
-To see the stacks from all goroutines in crash messages, set the environment variable `GOTRACEBACK` to all or call `debug.SetTraceback` before the crash, and rerun the program.
+Para ver as stacks de todas as goroutines, use a variável de ambiente `GOTRACEBACK=all` or faça uma chamada para `debug.SetTraceback` antes do crash e rode o programa novamente.
 
     env GOTRACEBACK=all ./crashy
 
-Read more:
+Mais detalhes (em inglês):
 
 - [[http://dave.cheney.net/2015/11/29/a-whirlwind-tour-of-gos-runtime-environment-variables#GOTRACEBACK][A whirlwind tour of Go’s runtime environment variables]]
 
-* Panic messages are shorter by default (example)
+* Mensagens de panic são mais curtas por padrão (example)
 
 .play go1.6/crashy.go /START OMIT/,/END OMIT/
 
-* Windows timer resolution
+* Resolução de timers no Windows
 
-On Windows, Go programs in Go 1.5 and earlier forced the global Windows timer resolution to 1ms at startup by calling `timeBeginPeriod(1)`.
+No Windows, programas em Go 1.5 e versões anteriores forçavam a resolução de timers gloabl para 1ms na inicialização chamando `timeBeginPeriod(1)`.
 
-This makes Windows users' batteries sad.
+Isso gastava muita bateria.
 
-Go 1.6 no longer needs this for good scheduler performance, and changing the global timer resolution caused problems on some systems, so the call has been removed.
+O Go 1.6 não precisa mais disso para uma boa performance do scheduler e mudar esse valor global causava problemas em alguns sistemas, então a chamada foi removida.
 
-* Vendor support
+* Support a vendoring
 
-Go 1.5 introduced experimental support for vendoring, enabled by setting the `GO15VENDOREXPERIMENT` environment variable to 1
+O Go 1.5 introduziu suporte experimental a vendoring, habilitado com o uso da variável de ambiente `GO15VENDOREXPERIMENT` com o valor 1.
 
-Go 1.6 keeps the vendoring support, no longer considered experimental, and enables it by default.
+O Go 1.6 mantém o suporte, que não é mais considerado experimental, e habilita ele por padrão.
 
-It can be disabled explicitly by setting the GO15VENDOREXPERIMENT environment variable to 0. Go 1.7 will remove support for the environment variable.
+Ele pode ser desativado explicitamente usando `GO15VENDOREXPERIMENT=0`. O Go 1.7 vai remover o suporte a essa variável de ambiente.
 
-The most likely problem caused by enabling vendoring by default happens in source trees containing an existing directory named `vendor` that does not expect to be interpreted according to new vendoring semantics. In this case, the simplest fix is to rename the directory to anything other than vendor and update any affected import paths.
+O problema mais provável causado pelo vendoring habilitado por padrão acontece em bases de código que já tenham um diretório chamado `vendor` criado anteriormente com outros objetivos. Nesse caso, a solução mais simples é renomear esse diretório para qualquer coisa diferente de vendor.
 
-* How does it work?
+* Como funciona?
 
         /home/user/gocode/
             src/
@@ -232,80 +232,68 @@ The most likely problem caused by enabling vendoring by default happens in sourc
                                 mux/
                                     ...
 
-`server-one` uses the `mux` package in
+`server-one` usa o pacote `mux` em
 
 	$GOPATH/src/github.com/gorilla/mux
 
-`server-two` uses the `mux` package in
+`server-two` usa o pacote `mux` em
 
 	$GOPATH/src/server-two/vendor/github.com/gorilla/mux
 
-* Vendoring (demo)
+* Armadilhas do vendoring
 
-* Vendoring gotchas
+O código na pasta vendor é acessado quando se usa ./...
 
-Vendored code matches ./...
-
-If you're used to doing
+Se você está acostumado a fazer
 
    % cd $GOPATH/github.com/you/repo
    % go test ./...
 
-The go tool glob operator `...`, _also_matches_ things in your `vendor/` directory.
+O operador `...` _também_retorna_ o conteúdo da pasta `vendor/`.
 
-The workaround is to filter out vendored packages by name
+Isso se resolve filtrando os pacotes vendorizados
 
    go test $(go list ./... | grep -v /vendor/)
 
-Read More
+Mais detalhes (em inglês):
 
 - [[https://github.com/golang/go/issues/11659#issuecomment-171678025][Issue 11659]]
 
-* LLVM memory sanitizer, -msan
-
-The compiler, linker, and go command have new flag `-msan`, analogous to `-race` that enables interoperation with the Clang MemorySanitizer.
-
-Such interoperation useful mainly for testing a program containing suspect C or C++ code.
-
-    go build -msan $YOURCOMMAND
-
-This should probably be considered _experimental_ and only available on linux/amd64.
-
 * Performance
 
-On average the programs in the Go 1 benchmark suite run a few percent faster in Go 1.6 than they did in Go 1.5.
+Na média os programas da suíte de benchmarks do Go 1 rodam alguns porcento mais rápido no Go 1.6 do que rodavam no Go 1.5.
 
-The garbage collector's pauses are even lower than in Go 1.5, although the effect is likely only noticeable for programs using a large amount of memory.
+As pauas do garbage collector são ainda menores do que eram no Go 1.5, embora o efeito provavelmente só seja visível para programas usando muita memória.
 
-There have been significant optimizations bringing more than 10% improvements to implementations of the compress/bzip2, compress/gzip, crypto/aes, crypto/elliptic, crypto/ecdsa, and sort packages.
+Para os pacotes compress/bzip2, compress/gzip, crypto/aes, crypto/elliptic, crypto/ecdsa, e sort foram feitas otimizações com impacto bem acima dos 10%.
 
-* Sorting
+* Ordenação
 
-In the sort package, the implementation of `Sort` has been rewritten to make about 10% fewer calls to the Interface's `Less` and `Swap` methods.
+No pacote sort, a implementação do `Sort` foi reescrita e faz cerca de 10% menos chamadas para os métodos `Less` e `Swap` da Interface.
 
-The new algorithm does choose a different ordering than before for values that compare equal (those pairs for which `Less(i,`j)` and `Less(j,`i)` are false).
+O novo algoritmo acaba escolhendo uma ordenação diferente para valores que são considerados iguais (pares quem que `Less(i,`j)` e `Less(j,`i)` são false).
 
-The definition of `Sort` makes no guarantee about the final order of _equal_values_, the new behavior may break programs that expect a specific order.
+A definição do `Sort` não dá nenhuma garantia sobre a ordem final de _valores_iguais_, o novo comportamento pode quebrar programas que esperam uma ordenação específica para eles.
 
-Such programs should either refine their Less implementations to report the desired order or should switch to `sort.Stable`, which preserves the original input order of equal values.
+Esses programas terão que refinar a sua implementação do Less para reportar essa ordem desejada ou passar a usar o `sort.Stable`, que preserva a ordem do input no caso de valores iguais.
 
-* sort.Sort example
+* Exemplo do sort.Sort
 
 .play go1.6/sort.go /START OMIT/,/END OMIT/
 
-_Change_sort.Sort_to_sort.Stable_and_observe_the_effect_on_the_Bills_
+_Mude_de_sort.Sort_para_sort.Stable_e_observe_o_efeito_nos_Bills_
 
-* Stripping whitespace with text/template
+* Remoção de espaço em branco com text/template
 
-It is now possible to trim spaces around template actions, which can make template definitions more readable.
+Agora é possível dar trim em espaços em volta de ações de template, o que pode deixar templates mais legíveis.
 
-A minus sign at the beginning of an action says to trim space before the action, and a minus sign at the end of an action says to trim space after the action.
+Um sinal de menos no começo de uma ação significa trim spaces antes da ação e um sinal de menos no final da ação significa trim spaces depois da ação.
 
 .play go1.6/template.go
 
-* Go vet command
+* Comando go vet
 
-The go vet command now diagnoses passing function or method values as arguments to Printf, such as when passing f where f() was intended.
+O comando go ver agora diagnostica passagem de funções ou métodos como valor para o Printf, como por exemplo passar f em vez de f().
 
 .code go1.6/vet.go
 
@@ -314,102 +302,103 @@ The go vet command now diagnoses passing function or method values as arguments 
 
 * Gccgo
 
-The release schedules for the GCC and Go projects do not coincide.
+Os calendários para o release do GCC e do Go não coincidem.
 
-GCC release 5 contains the Go 1.4 version of gccgo.
+O GCC versão 5 contém a versão Go 1.4 do gccgo.
 
-The next release, GCC 6, will have the Go 1.5 version of gccgo.
+No próximo release, GCC 6, passará a conter a versão Go 1.5 do gccgo.
 
-Due to release scheduling, it is likely that Go 1.6 will not be in a GCC release until GCC 7.
+Por causa dos calendários dos releases, é provável que o Go 1.5 não seja incluído em um release do GCC até o GCC 7.
 
-* Minor standard library changes
+* Pequenas mudanças na standard library
 
-As well as the big improvements mentioned above, the standard library received many bug fixes and minor improvements.
+Assim como as grandes melhorias já mencionadas, a standard library recebeu várias correções de bugs e pequenas melhorias.
 
-This section highlights a few of these changes.
+Essa seção mostra algumas dessas mudanças.
 
-Read more
+Leia mais (em inglês):
 
 - [[https://tip.golang.org/doc/go1.6#minor_library_changes][Go 1.6 release notes]]
 
 * archive/tar
 
-Joe Tsai has put a lot of effort into the archive/tar package, correcting many bugs in rare corner cases of the file format.
+Joe Tsai trabalhou muito em cima do pacote archive/tar, corrigindo vários bugs em casos raros desse formato de arquivo.
 
-One visible change is that the Reader type's Read method now presents the content of special file types as being empty, returning `io.EOF` immediately.
+Uma mudança visível é que o método Read do tipo Reader agora apresenta o conteúdo de tipos de arquivo especiais como vazio em vez de retornar `io.EOF` imediatamente.
 
 * bufio
 
-The bufio package's Scanner type now has a Buffer method, to specify an initial buffer and maximum buffer size to use during scanning.
+O tipo Scanner do pacote bufio agora tem um método Buffer que especifica um buffer inicial e tamanho máximo de buffer a serem usados durante o escaneamento.
 
-This makes it possible, when needed, to scan tokens larger than MaxScanTokenSize.
+Isso permite, quando necessário, que se escaneie tokens maiores do que o MaxScanTokenSize.
 
-Also for the Scanner, the package now defines the ErrFinalToken error value, for use by split functions to abort processing or to return a final empty token.
+Também para o Scanner, o pacote agora define o erro ErrFinalToken, para ser usado em funções de split para abortar o processamento ou para retornar um token vazio no final.
 
 * bufio (example)
 
 .play go1.6/scan.go /START OMIT/,/END OMIT/
 
-* net/* changes
+* Mudanças nos pacotes net/*
 
-The net/http package has a number of minor additions beyond the HTTP/2 support already discussed.
+O pacote net/http teve algumas pequenas alterações além do suporte a HTTP/2.
 
-- The FileServer now sorts its generated directory listings by file name.
-- The Client now allows user code to set the Expect: 100-continue header (see Transport.ExpectContinueTimeout).
-- There are four new error codes from RFC 6585: StatusPreconditionRequired (428), StatusTooManyRequests (429), StatusRequestHeaderFieldsTooLarge (431), and StatusNetworkAuthenticationRequired (511).
-- The implementation and documentation of CloseNotifier has been substantially changed. The Hijacker interface now works correctly on connections that have previously been used with CloseNotifier. The documentation now describes when CloseNotifier is expected to work.
+- O FileServer agora ordena os arquivos por nome.
+- O Client agora que permite que se use o header Expect: 100-continue (ver Transport.ExpectContinueTimeout).
+- Existem agora quatro novos tipos de códigos de erro do RFC 6585: StatusPreconditionRequired (428), StatusTooManyRequests (429), StatusRequestHeaderFieldsTooLarge (431), and StatusNetworkAuthenticationRequired (511).
+- A implementação e documentação do CloseNotifier foi fortemente modificada. A interface Hijacker agora funciona corretamente em conexões que tenham sido usadas antes com o CloseNotifier. A documentação agora descreve quando se espera que o CloseNotifier funcione.
 
-* net/* changes (cont.)
-- The net/http/httptest package's ResponseRecorder now initializes a default Content-Type header using the same content-sniffing algorithm as in http.Server.
-- The net/url package's Parse is now stricter and more spec-compliant regarding the parsing of host names. For example, spaces in the host name are no longer accepted.
-- net/url.Error type now implements `net.Error` to provide `Temporary` and `Timeout` behaviours.
+* Mudanças nos pacotes net/* (cont.)
+
+- O ResponseRecorder do pacote net/http/httptest agora inicializa o header Content-Type default usando os mesmos algoritmos de sniffar conteúdo do http.Server.
+- O Parse do pacote net/url agora é mais estrito e adere melhor à especificação de parsing de hostnames. Por exemplo, espaços em hostnames não são mais aceitos.
+- O tipo net/url.Error agora implementa o `net.Error` para permitir uso de `Temporary` e `Timeout`.
 
 * GODEBUG=netdns
 
-The `net` package implements two DNS resolvers
+O pacote `net` implementa dois resolvedores de DNS
 
-- cgo based resolver which uses the platform's dns resolver
-- the so called "pure Go" DNS resolver
+- um baseado em cgo que usa a resolução de dns da plataforma
+- outro em Go puro
 
-The former is the default when not cross compiling, the latter is enabled exclusively when cross compiling.
+O primeiro é o padrão quando não se compila multiplataforma, o segundo é habilitado exclusivamente durante cross compiling.
 
-For "native" builds, you can control this setting with
+Para builds "nativas", você pode controlar essa configuração com
 
-    export GODEBUG=netdns=go    # force pure Go resolver
-    export GODEBUG=netdns=cgo   # force cgo resolver
+    export GODEBUG=netdns=go    # forçar Go puro
+    export GODEBUG=netdns=cgo   # forçar cgo
 
-Read more
+Leia mais (em inglês):
 
-- [[https://golang.org/pkg/net/#hdr-Name_Resolution][Name resolution section]] of the `net` package documentation.
+- [[https://golang.org/pkg/net/#hdr-Name_Resolution][Seção name resolution]] da documentação do pacote `net`.
 
 * os
 
-The os package's `IsExist`, `IsNotExist`, and `IsPermission` now return correct results when inquiring about a `SyscallError`.
+Os métodos `IsExist`, `IsNotExist` e `IsPermission` do pacote os agora retornam valores corretos ao analisar um `SyscallError`.
 
-On Unix-like systems, when a write to `os.Stdout` or `os.Stderr` fails due to a broken pipe error, the program will raise a `SIGPIPE` signal. By default this will cause the program to exit; this may be changed by calling the `os/signal.Notify` function for `syscall.SIGPIPE`. 
+Em sistemas baseados em Unix, quando uma escrita para o `os.Stdout` ou `os.Stderr` falha por causa de um broken pipe, o programa lança um sinal `SIGPIPE`. Por padrão, isso faz o programa terminar; isso pode ser modificado usando `os/signal.Notify` com o `syscall.SIGPIPE`.
 
-In Go 1.6 a write to a broken pipe on a file descriptor other 1 or 2 will simply return `syscall.EPIPE` (possibly wrapped in `os.PathError` and/or `os.SyscallError`) to the caller.
+No Go 1.6 uma escrita para um broken pipe em um file descriptor que não seja o 1 ou 2 simplesmente retorna `syscall.EPIPE` (possivelmente aninhado em um `os.PathError` e/ou `os.SyscallError`.
 
-The old behavior of raising an uncatchable SIGPIPE signal after 10 consecutive writes to a broken pipe no longer occurs.
+O comportamento antigo de lançar um sinal SIGPIPE que não tinha como ser tratado depois de 10 escritas consecutivas para um broken pipe não acontece mais.
 
 * regexp
 
-In the regexp package, the Regexp type has always been safe for use by concurrent goroutines.
+No pacote regexp, o tipo Regexp sempre foi seguro para uso concorrent por várias goroutines.
 
-Some high-concurrency servers using the same Regexp from many goroutines have seen degraded performance due to contention on a mutex protecting a cache of scratch spaces used during regular expression searches.
+Alguns servidores de alta concorrência usando o mesmo Regexp para várias goroutines já tiveram problemas de performance por contenção causada pelo mutex usado internamente para proteger um cache de buscas de expressões regulares.
 
-To help such servers, Regexp now has a Copy method, which makes a copy of a Regexp that shares most of the structure of the original but has its own scratch space cache.
+Para ajudar esses servidores, o Regexp agora tem um método Copy, que faz uma cópia do Regexp compartilhando quase toda a estrutura do original mas com o seu próprio cache interno.
 
     re1 := regexp.MustCompile(`^(?P<root>github\.com/([A-Za-z0-9_.\-]+/[A-Za-z0-9_.\-]+))(/[A-Za-z0-9_.\-]+)*$`)
     re2 := re1.Copy()
 
-A copy does have additional space overhead, so Copy should only be used when contention has been observed.
+Uma cópia gasta mais memória, o Copy só deve ser usado se há certeza que contenção causada pelo Regexp foi observada.
 
 * time
 
-The time package's Parse function has always rejected any day of month larger than 31, such as January 32.
+A função Parse do pacote time sempre rejeitou qualquer dia do mês acima de 31, como 32 de Janeiro.
 
-In Go 1.6, Parse now also rejects February 29 in non-leap years, February 30, February 31, April 31, June 31, September 31, and November 31.
+No Go 1.6, o Parse agora também rejeita 29 de Fevereiro em anos que não são bissextos, 30 de Fevereiro, 31 de Fevereiro, 31 de Abril, 31 de Junho, 31 de Setembro e 31 de Novembro.
 
 .play go1.6/parse.go
 
@@ -419,4 +408,4 @@ In Go 1.6, Parse now also rejects February 29 in non-leap years, February 30, Fe
 
 .image go1.6/GoLaunch_Front.png 440 _
 
-_Credit_: [[http://www.meetup.com/golangsf/events/226090306/][iron.io / GoSF Meetup]].
+_Créditos_: [[http://www.meetup.com/golangsf/events/226090306/][iron.io / GoSF Meetup]].

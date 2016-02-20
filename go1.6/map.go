@@ -11,7 +11,7 @@ import (
 
 // START OMIT
 func main() {
-	// reduce this number and see the effect
+	// reduza esse número para ver o efeito
 	const workers = 99
 
 	var wg sync.WaitGroup
