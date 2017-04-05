@@ -1,0 +1,32 @@
+Concorrência na prática
+7 Masters Go
+05 Apr 2017
+
+Vitor De Mario
+@vdemario
+
+* Básico
+
+Concorrência é um dos pontos fortes da linguagem Go.
+
+É baseada em channels e goroutines.
+
+Como se usam essas features no dia a dia?
+
+* Sintaxe básica
+
+* Select
+
+* Wait groups
+
+* Cancelamento com context
+
+* Workers
+
+* Juntando tudo
+
+.code 7masters/steps.go
+
+* Realidade
+
+.code 7masters/gnomad_real.go
