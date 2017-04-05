@@ -150,16 +150,6 @@ O trabalho pode ser interrompido usando contexts.
 
 .code 7masters/steps.go
 
-* Juntando tudo
-
-Cada func controla sua própria concorrência criando seu próprio WaitGroup e passando ele para as goroutines que essa func cria.
-
-Cada func recebe um WaitGroup como parâmetro criado pelo seu parent.
-
-Alternativamente, pode existir um único WaitGroup para o programa inteiro.
-
-Cancelamento é controlado por um context criado no top level do programa.
-
 * Realidade
 
 .code 7masters/gnomad_real.go
