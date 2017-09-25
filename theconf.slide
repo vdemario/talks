@@ -114,8 +114,6 @@ A program can be split into many concurrent tasks easily with channels and gorou
 
 Each task may or may not run in parallel, with varying degrees of parallelism.
 
-The work can be interrupted using contexts.
-
 * Workers
 
 .code theconf/worker.go
@@ -155,7 +153,7 @@ In the gnomAD program, a *couple*million* mutations could have been processed in
 - Buffers
 - Select
 - Timeouts
-- Context: cancellation and deadlines
+- Cancellation with contexts
 
 * Buffers
 
