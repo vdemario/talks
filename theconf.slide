@@ -9,11 +9,9 @@ Vitor De Mario
 
 Concurrency is one of the strongest suits of the Go language.
 
-It is based on channels and goroutines.
+It's based on channels and goroutines.
 
-What are those?
-
-How do we use them on a daily basis?
+What are those? How do we use them on a daily basis?
 
 * Channels
 
@@ -37,7 +35,7 @@ For those that come from the Java world, think of a `BlockingQueue`.
 
 	// read from a channel until it's exhausted
 	for i := range ch {
-		...
+		// ...
 	}
 
 
@@ -56,28 +54,30 @@ Several goroutines run on one OS thread. They are light enough to run thousands 
 	// start a goroutine
 	go func()
 
+That's all.
+
 * Goroutines and channels together
 
-	// channels passed as parameters as usual
+	// channels can be passed as parameters
 	go func(input chan int, output chan int)
 
-	// channel direction defined at the function signature
+	// channel direction can be defined at the function signature
 	go func(input <-chan int, output chan<- int)
 
 * Synchronization
 
-When many goroutines run at the same time you need to know when they finish:
+How do you know when a goroutine has finished?
 
 	// channel to signal the end of the goroutine
 	done := make(chan struct{})
 
 	go func1() {
-		...
+		// ...
 		done <- struct{}{}
 	}()
 
 	go func2() {
-		...
+		// ...
 		done <- struct{}{}
 	}()
 
@@ -97,13 +97,13 @@ This is better:
 	wg.Add(1)
 	go func1() {
 		defer wg.Done()
-		...
+		// ...
 	}()
 
 	wg.Add(1)
 	go func2() {
 		defer wg.Done()
-		...
+		// ...
 	}()
 
 	wg.Wait()
@@ -148,6 +148,8 @@ A lot of control over the degree of parallelism of the program. It's very easy t
 
 In the gnomAD program, a *couple*million* mutations could have been processed in the time it took to reach this point in the presentation.
 
+That means the largest database of human mutations ever known could be fully processed in about 36 hours in a single machine.
+
 * Beyond the basics
 
 - Buffers
@@ -174,9 +176,9 @@ What if I need to read from N channels at the same time without knowing which on
 
 	select {
 	case <-ch1:
-		...
+		// ...
 	case <-ch2:
-		...
+		// ...
 	}
 
 * Select
@@ -187,7 +189,7 @@ Received:
 
 	select {
 	case i := <-ch:
-		...
+		// ...
 	default:
 		// nothing on the channel
 	}
@@ -196,7 +198,7 @@ Send:
 
 	select {
 	case ch <- i:
-		...
+		// ...
 	default:
 		// channel is full
 	}
@@ -207,7 +209,7 @@ What if I can only block for a while?
 
 	select {
 	case i := <-ch:
-		...
+		// ...
 	case <-time.After(2 * time.Second):
 		// timeout
 	}

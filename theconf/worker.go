@@ -3,7 +3,6 @@ package main // OMIT
 import "sync"
 
 func worker(mainWG *sync.WaitGroup, input <-chan int, output chan<- int, parallelism int) {
-
 	defer mainWG.Done()
 
 	wg := sync.WaitGroup{}
