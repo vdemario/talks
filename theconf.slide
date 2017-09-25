@@ -26,9 +26,6 @@ For those that come from the Java world, think of a `BlockingQueue`.
 	// create
 	ch := make(chan int)
 
-	// buffer - it exists, but you shouldn't use them
-	ch := make(chan int, 2048)
-
 	// send
 	ch <- 1
 
@@ -159,6 +156,17 @@ In the gnomAD program, a *couple*million* mutations could have been processed in
 - Select
 - Timeouts
 - Context: cancellation and deadlines
+
+* Buffers
+
+Channels are queues. Queues can have different sizes.
+
+	// buffer - it exists, but don't use them
+	ch := make(chan int, 2048)
+
+Buffers store values in memory and make them available immediately to the next read operation.
+
+There might be good uses for them but in my experience they just waste memory.
 
 * Select
 
