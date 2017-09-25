@@ -3,9 +3,9 @@ package main
 import "sync"
 
 func coordinate() {
-	chan1 := make(chan interface{})
-	chan2 := make(chan int)
-	chan3 := make(chan struct{})
+	chan1 := make(chan int)
+	chan2 := make(chan bool)
+	chan3 := make(chan SomeStruct)
 
 	wg := sync.WaitGroup{}
 

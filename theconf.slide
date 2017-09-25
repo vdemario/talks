@@ -5,38 +5,40 @@ THE CONF
 Vitor De Mario
 @vdemario
 
-* Básico
+* The basics
 
-Concorrência é um dos pontos fortes da linguagem Go.
+Concurrency is one of the strongest suits of the Go language.
 
-É baseada em channels e goroutines.
+It is based on channels and goroutines.
 
-Como se usam essas features no dia a dia?
+What are those?
+
+How do we use them on a daily basis?
 
 * Channels
 
-Channels são filas bloqueantes.
+Channels are blocking queues.
 
-Pra quem já programou em Java, pense numa `BlockingQueue`.
+For those that come from the Java world, think of a `BlockingQueue`.
 
-* Sintaxe básica de channels
+* Channels basic syntax
 
-	// criar
+	// create
 	ch := make(chan int)
 
-	// buffer - existe, mas você não vai precisar
+	// buffer - it exists, but you shouldn't use them
 	ch := make(chan int, 2048)
 
-	// enviar
+	// send
 	ch <- 1
 
-	// receber
+	// receive
 	i := <-ch
 
-	// fechar
+	// close
 	close(ch)
 
-	// consumir channel em loop até fechar
+	// read from a channel until it's exhausted
 	for i := range ch {
 		...
 	}
@@ -44,49 +46,52 @@ Pra quem já programou em Java, pense numa `BlockingQueue`.
 
 * Goroutines
 
-Uma goroutine é o equivalente a uma thread leve.
+A goroutine is the equivalent of a lightweight thread.
 
-Uma thread do sistema operacional é relativamente pesada. Uma stack é alocada com tamanho grande.
+An operating system thread is comparatively heavy. It is allocated with a big stack.
 
-Uma goroutine é alocada com uma stack pequena e pode crescer dinamicamente.
+Goroutines are allocated with small stacks and may grow dinamically.
 
-Várias goroutines rodam dentro da mesma thread do SO. São leves o suficiente para se rodar milhares ao mesmo tempo.
+Several goroutines run on one OS thread. They are light enough to run thousands in parallel.
 
-* Sintaxe básica de goroutines
+* Goroutines basic syntax
 
-	// disparar goroutine
+	// start a goroutine
 	go func()
 
-* Goroutines e channels juntos
+* Goroutines and channels together
 
-	// assinatura de função definindo direção do channel
-	func(input <-chan int, output chan<- int)
+	// channels passed as parameters as usual
+	go func(input chan int, output chan int)
 
-* Sincronização
+	// channel direction defined at the function signature
+	go func(input <-chan int, output chan<- int)
 
-Quando várias goroutines rodam ao mesmo tempo:
+* Synchronization
 
-	// channel pra indicar fim do trabalho da goroutine
+When many goroutines run at the same time you need to know when they finish:
+
+	// channel to signal the end of the goroutine
 	done := make(chan struct{})
 
 	go func1() {
 		...
-		done <- struct{}
+		done <- struct{}{}
 	}()
 
 	go func2() {
 		...
-		done <- struct{}
+		done <- struct{}{}
 	}()
 
 	<-done
 	<-done
 
-Essa é a versão mais grosseira.
+This isn't very refined.
 
 * Wait groups
 
-Melhor:
+This is better:
 
 	import "sync"
 
@@ -108,11 +113,11 @@ Melhor:
 
 * Workers
 
-Channels e goroutines facilitam a subdivisão de um programa em tarefas concorrentes.
+A program can be split into many concurrent tasks easily with channels and goroutines.
 
-Cada "tarefa" pode ser paralelizada ou não, com diferentes graus de paralelismo.
+Each task may or may not run in parallel, with varying degrees of parallelism.
 
-O trabalho pode ser interrompido usando contexts.
+The work can be interrupted using contexts.
 
 * Workers
 
@@ -122,10 +127,10 @@ O trabalho pode ser interrompido usando contexts.
 
 .image theconf/workers.gif
 
-Créditos: Ivan Daniluk
+Credits: Ivan Daniluk
 http://divan.github.io/posts/go_concurrency_visualize/
 
-* Juntando tudo
+* Everything together
 
 .code theconf/steps.go
 
@@ -133,26 +138,33 @@ http://divan.github.io/posts/go_concurrency_visualize/
 
 .image theconf/workers2.gif
 
-Créditos: Ivan Daniluk
+Credits: Ivan Daniluk
 http://divan.github.io/posts/go_concurrency_visualize/
 
-* Realidade
+* The real world
 
 .code theconf/gnomad_real.go
 
 * Performance
 
-Consumo de memória baixíssimo. Se você não colocar buffers nos channels, o consumo de memória é quase 0.
+Extremely low memory consumption.
 
-Você tem controle sobre o grau de paralelismo do programa. É muito fácil alcançar 100% de CPU.
+A lot of control over the degree of parallelism of the program. It's very easy to hit 100% CPU.
 
-No programa do gnomAD, no tempo que levou até chegar nesse ponto da apresentação, teríamos processado *um*milhão* de mutações em uma máquina com 8 cores.
+In the gnomAD program, a *couple*million* mutations could have been processed in the time it took to reach this point in the presentation.
+
+* Beyond the basics
+
+- Buffers
+- Select
+- Timeouts
+- Context: cancellation and deadlines
 
 * Select
 
-Sends e receives em canais são operações bloqueantes.
+Sends and receives on channels are blocking operations.
 
-E se eu preciso ler de N channels ao mesmo tempo e não sei quem vem primeiro?
+What if I need to read from N channels at the same time without knowing which one will have data first?
 
 	select {
 	case <-ch1:
@@ -163,27 +175,29 @@ E se eu preciso ler de N channels ao mesmo tempo e não sei quem vem primeiro?
 
 * Select
 
-E se eu não puder bloquear?
+What if I can't block?
 
-Receber:
+Received:
 
 	select {
 	case i := <-ch:
 		...
 	default:
-		// não tinha nada pra receber
+		// nothing on the channel
 	}
 
-Enviar:
+Send:
 
 	select {
 	case ch <- i:
 		...
 	default:
-		// channel está cheio, não enviei
+		// channel is full
 	}
 
 * Timeout
+
+What if I can only block for a while?
 
 	select {
 	case i := <-ch:
@@ -192,30 +206,32 @@ Enviar:
 		// timeout
 	}
 
-Ou recebo um dado em 2 segundos ou aborto.
+I'll get data in 2 seconds or abort.
 
-* Cancelamento com context
+* Cancellation with contexts
 
-Contexts incluem um channel que pode ser usado para interromper um trabalho longo:
+Contexts have a channel that can be used to stop long processes:
 
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		// inicia trabalho pesado
+		// start something heavy
 	}
 
-Contexts podem ser usados com cancelamento, com deadlines, com timeouts.
+Contexts may be used with cancellation, deadlines and timeouts.
 
-São usados dentro da stdlib pelos pacotes net/http e database/sql.
+They're used in the standard library by the net/http and database/sql packages.
 
-* Workers com cancelamento por context
+* Workers with context cancellation
 
 .code theconf/workerctx.go
 
-* Helper para verificar cancelamento
+* Cancellation helper
 
-Quanto mais responsivo você quiser que o seu programa seja, menos legível fica o código com contexts.
+The more responsive you want to be, the less readable the code with contexts is.
+
+One way to improve readability:
 
 	func cancelled(ctx context.Context) bool {
 		select {
@@ -226,14 +242,14 @@ Quanto mais responsivo você quiser que o seu programa seja, menos legível fica
 		}
 	}
 
-* Usando função cancelled
+* Using the `cancelled` helper
 
 	for a := range input {
 		if cancelled(ctx) {
 			break
 		}
-		// faz o processamento
+		// do the heavy lifting
 		output <- a
 	}
 
-Mais fácil de ler, mas só verifica se precisa cancelar quando recebe um novo dado.
+Easier to read but it only checks for cancellation when there's new data.
