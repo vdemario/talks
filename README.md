@@ -3,7 +3,7 @@
 Apresentações diversas.
 
 - [O que há de novo na versão 1.6](#o-que-há-de-novo-na-versão-16---go-meetup-vi--go-16-release-party)
-- [Go concurrency in practice]()
+- [Go concurrency in practice](#go-concurrency-in-practice---the-conf)
 
 ### O que há de novo na versão 1.6? - [Go Meetup VI + Go 1.6 release party](http://www.meetup.com/golangbr/events/228525183/)
 
