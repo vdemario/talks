@@ -129,7 +129,7 @@ http://divan.github.io/posts/go_concurrency_visualize/
 
 .code theconf/steps.go
 
-* Juntando tudo
+* Everything together
 
 .image theconf/workers2.gif
 
