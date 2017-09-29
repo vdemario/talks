@@ -69,16 +69,16 @@ That's all.
 How do you know when a goroutine has finished?
 
 	// channel to signal the end of the goroutine
-	done := make(chan struct{})
+	done := make(chan bool)
 
 	go func1() {
 		// ...
-		done <- struct{}{}
+		done <- true
 	}()
 
 	go func2() {
 		// ...
-		done <- struct{}{}
+		done <- true
 	}()
 
 	<-done
