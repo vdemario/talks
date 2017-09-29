@@ -155,7 +155,6 @@ That means the largest database of human mutations ever known could be fully pro
 - Buffers
 - Select
 - Timeouts
-- Cancellation with contexts
 
 * Buffers
 
@@ -215,49 +214,3 @@ What if I can only block for a while?
 	}
 
 I'll get data in 2 seconds or abort.
-
-* Cancellation with contexts
-
-Contexts have a channel that can be used to stop long processes:
-
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	default:
-		// start something heavy
-	}
-
-Contexts may be used with cancellation, deadlines and timeouts.
-
-They're used in the standard library by the net/http and database/sql packages.
-
-* Workers with context cancellation
-
-.code theconf/workerctx.go
-
-* Cancellation helper
-
-The more responsive you want to be, the less readable the code with contexts is.
-
-One way to improve readability:
-
-	func cancelled(ctx context.Context) bool {
-		select {
-		case <-ctx.Done():
-			return true
-		default:
-			return false
-		}
-	}
-
-* Using the `cancelled` helper
-
-	for a := range input {
-		if cancelled(ctx) {
-			break
-		}
-		// do the heavy lifting
-		output <- a
-	}
-
-Easier to read but it only checks for cancellation when there's new data.
