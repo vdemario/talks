@@ -1,0 +1,263 @@
+Concorrência na prática
+TDC Porto Alegre
+11 Nov 2017
+
+Vitor De Mario
+@vdemario
+
+* Básico
+
+Concorrência é um dos pontos fortes da linguagem Go.
+
+É baseada em channels e goroutines.
+
+Como se usam essas features no dia a dia?
+
+* Channels
+
+Channels são filas bloqueantes.
+
+Pra quem já programou em Java, pense numa `BlockingQueue`.
+
+* Sintaxe básica de channels
+
+	// criar
+	ch := make(chan int)
+
+	// enviar
+	ch <- 1
+
+	// receber
+	i := <-ch
+
+	// fechar
+	close(ch)
+
+	// consumir channel em loop até fechar
+	for i := range ch {
+		// ...
+	}
+
+
+* Goroutines
+
+Uma goroutine é o equivalente a uma thread leve.
+
+Uma thread do sistema operacional é relativamente pesada. Uma stack é alocada com tamanho grande.
+
+Uma goroutine é alocada com uma stack pequena e pode crescer dinamicamente.
+
+Várias goroutines rodam dentro da mesma thread do SO. São leves o suficiente para se rodar milhares ao mesmo tempo.
+
+* Sintaxe básica de goroutines
+
+	// disparar goroutine
+	go func()
+
+É só isso.
+
+* Goroutines e channels juntos
+
+	// channels podem ser passados como parâmetros
+	go func(input chan int, output chan int)
+
+	// a direção de um channel pode ser definida na assinatura da função
+	go func(input <-chan int, output chan<- int)
+
+* Sincronização
+
+Como saber que uma goroutine terminou?
+
+	// channel para indicar fim do trabalho da goroutine
+	done := make(chan bool)
+
+	go func1() {
+		// ...
+		done <- true
+	}()
+
+	go func2() {
+		// ...
+		done <- true
+	}()
+
+	<-done
+	<-done
+
+Essa versão não é muito refinada.
+
+* Wait groups
+
+Melhor:
+
+	import "sync"
+
+	wg := sync.WaitGroup{}
+
+	wg.Add(1)
+	go func1() {
+		defer wg.Done()
+		// ...
+	}()
+
+	wg.Add(1)
+	go func2() {
+		defer wg.Done()
+		// ...
+	}()
+
+	wg.Wait()
+
+* Workers
+
+Channels e goroutines facilitam a subdivisão de um programa em tarefas concorrentes.
+
+Cada "tarefa" pode ser paralelizada ou não, com diferentes graus de paralelismo.
+
+* Workers
+
+.code tdcpoa/worker.go
+
+* Workers
+
+.image tdcpoa/workers.gif
+
+Créditos: Ivan Daniluk
+http://divan.github.io/posts/go_concurrency_visualize/
+
+* Juntando tudo
+
+.code tdcpoa/steps.go
+
+* Juntando tudo
+
+.image tdcpoa/workers2.gif
+
+Créditos: Ivan Daniluk
+http://divan.github.io/posts/go_concurrency_visualize/
+
+* Realidade
+
+.code tdcpoa/gnomad_real.go
+
+* Performance
+
+Consumo de memória baixíssimo.
+
+Você tem controle sobre o grau de paralelismo do programa. É muito fácil alcançar 100% de CPU.
+
+No programa do gnomAD, no tempo que levou até chegar nesse ponto da apresentação, teríamos processado *alguns*milhões* de mutações em uma máquina com 8 cores.
+
+Ou seja, o maior conjunto de mutações humanas de todos os tempos foi processado por esse programa em cerca de 36 horas em uma única máquina.
+
+* Além do básico
+
+- Buffers
+- Select
+- Timeouts
+- Context
+
+* Buffers
+
+Channels são filas e filas podem ter diferentes tamanhos.
+
+	// buffer - existe, mas não use
+	ch := make(chan int, 2048)
+
+Buffers guardam valores em memória e entregam imediatamente para a próxima operação de leitura.
+
+Existem raros bons usos para eles mas na minha experiência a maioria das vezes só desperdiçam memória.
+
+* Select
+
+Sends e receives em canais são operações bloqueantes.
+
+E se eu preciso ler de N channels ao mesmo tempo e não sei quem vem primeiro?
+
+	select {
+	case <-ch1:
+		// ...
+	case <-ch2:
+		// ...
+	}
+
+* Select
+
+E se eu não puder bloquear?
+
+Receber:
+
+	select {
+	case i := <-ch:
+		// ...
+	default:
+		// não tinha nada pra receber
+	}
+
+Enviar:
+
+	select {
+	case ch <- i:
+		// ...
+	default:
+		// channel está cheio, não enviei
+	}
+
+* Timeout
+
+E se eu só puder bloquear por um tempo?
+
+	select {
+	case i := <-ch:
+		// ...
+	case <-time.After(2 * time.Second):
+		// timeout
+	}
+
+Ou recebo um dado em 2 segundos ou aborto.
+
+* Cancelamento com context
+
+Contexts incluem um channel que pode ser usado para interromper um trabalho longo:
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		// inicia trabalho pesado
+	}
+
+Contexts podem ser usados com cancelamento, com deadlines, com timeouts.
+
+São usados dentro da stdlib pelos pacotes net/http e database/sql.
+
+* Workers com cancelamento por context
+
+.code concorrencia/workerctx.go
+
+* Helper para verificar cancelamento
+
+Quanto mais responsivo você quiser que o seu programa seja, menos legível fica o código com contexts.
+
+Uma alternativa:
+
+	func cancelled(ctx context.Context) bool {
+		select {
+		case <-ctx.Done():
+			return true
+		default:
+			return false
+		}
+	}
+
+* Usando função cancelled
+
+	for a := range input {
+		if cancelled(ctx) {
+			break
+		}
+		// faz o processamento
+		output <- a
+	}
+
+Mais fácil de ler, mas só verifica se precisa cancelar quando recebe um novo dado.
